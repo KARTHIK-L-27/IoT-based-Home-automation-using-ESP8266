@@ -1,0 +1,45 @@
+#include <ESP8266WiFi.h>
+
+const char* ssid = "YOUR_WIFI_NAME";
+const char* password = "YOUR_WIFI_PASSWORD";
+
+WiFiServer server(80);
+
+int relay1 = D1;
+int relay2 = D2;
+
+void setup() {
+  Serial.begin(9600);
+
+  pinMode(relay1, OUTPUT);
+  pinMode(relay2, OUTPUT);
+
+  WiFi.begin(ssid, password);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+  }
+
+  server.begin();
+}
+
+void loop() {
+  WiFiClient client = server.available();
+  if (!client) return;
+
+  String request = client.readStringUntil('\r');
+  client.flush();
+
+  if (request.indexOf("/R1ON") != -1) digitalWrite(relay1, HIGH);
+  if (request.indexOf("/R1OFF") != -1) digitalWrite(relay1, LOW);
+  if (request.indexOf("/R2ON") != -1) digitalWrite(relay2, HIGH);
+  if (request.indexOf("/R2OFF") != -1) digitalWrite(relay2, LOW);
+
+  client.println("HTTP/1.1 200 OK");
+  client.println("Content-Type: text/html");
+  client.println();
+  client.println("<h2>IoT Home Automation</h2>");
+  client.println("<a href='/R1ON'>Light ON</a><br>");
+  client.println("<a href='/R1OFF'>Light OFF</a><br>");
+  client.println("<a href='/R2ON'>Fan ON</a><br>");
+  client.println("<a href='/R2OFF'>Fan OFF</a><br>");
+}
